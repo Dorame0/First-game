@@ -1,0 +1,52 @@
+#basic framework
+class Boss():
+ #framework for the bosses to be built in
+    
+    def __inint__(self, name, attack, defense, health, attack_speed):
+    #The attack should go from 0-att/def with att/def being the damdage dealt/taken
+        self.name = name
+        self.attack = attack # 0-attack
+        self.defense = defense # 0-defense
+        self.health = health
+        self.level = #agrate of att/defense/health
+        self.attack_speed = attack_speed #need to figure out how to set this
+    
+    def __repr__(self):
+    #description of the bosses along with its att/defense/health/level
+        pass
+
+    def drop_table():
+    #drop table for the bosses
+
+    def damage_table():
+    #damage table for the bosses
+
+    def defense_table():
+    #defense table for the bosses
+
+    def accuracy_table():
+    #accuracy table for the bosses
+
+    def attack_speed_table():
+    #speed of bosses attacks
+
+    def special_attacks():
+    #to figure out what special att the bosses do
+
+class Player():
+ #framework for the player character
+    
+    def __init__(self, name, attack, damage, health, attack_speed):
+    #basic info about the player
+        self.name = name
+        self.attack = attack
+        self.damage = damage
+        self.health = health
+        self.level = level
+        self.attack_speed = attack_speed
+
+class Dungeon():
+ #Framework for where the player will fight the boss
+
+    def __inint__(self):
+    #basic info for the fight
