@@ -1,52 +1,293 @@
+import random
+import time
+
 #basic framework
 class Boss():
  #framework for the bosses to be built in
     
-    def __inint__(self, name, attack, defense, health, attack_speed):
-    #The attack should go from 0-att/def with att/def being the damdage dealt/taken
+    def __init__(self, name, attack, defense, health, attack_speed):
+        #The attack should go from 0-att/def with att/def being the damdage dealt/taken
         self.name = name
         self.attack = attack # 0-attack
         self.defense = defense # 0-defense
-        self.health = health
-        self.level = #agrate of att/defense/health
+        self.health = health * 10
+        self.max_health = health * 10
+        self.level = self.calculate_level()#agrate of att/defense/health
         self.attack_speed = attack_speed #need to figure out how to set this
+        self.is_dead = False
     
     def __repr__(self):
-    #description of the bosses along with its att/defense/health/level
-        pass
+        #description of the bosses along with its att/defense/health/level
+        return f"{self.name} is a level {self.level} boss with {self.health} health"
 
-    def drop_table():
-    #drop table for the bosses
+    def calculate_level(self):
+        #calculating the bosses level
+        return (self.attack % 10) + (self.defense % 10) + (self.health % 5)
 
-    def damage_table():
-    #damage table for the bosses
+    def drop_table(self, pet_drop_rate=1/16):
+        #drop table for the bosses
+        drop_table = {
+            "Kraken": {"attack": 1, "defense": 1, "health": 3}, 
+            "Cerberus": {"attack": 2, "defense": 2, "health": 6}, 
+            "Medusa": {"attack": 3, "defense": 3, "health": 9}, 
+            "Hydra": {"attack": 4, "defense": 4, "health": 12}, 
+            "Nemean Lion": {"attack": 5, "defense": 5, "health": 15}
+            }
 
-    def defense_table():
-    #defense table for the bosses
+        if self.name in drop_table:
+            #rolling for the chance of the pet based on the drop rate
+            if random.random() < pet_drop_rate:
+                pet_name = f"{self.name} Pet"
+                return f"You got the {pet_name}"
+            
+            return {"attributes": drop_table[self.name]}
+        return {}
 
-    def accuracy_table():
-    #accuracy table for the bosses
+    def kill(self, player):
+        #attack actions
+        accuracy = self.accuracy_table(player.defense)
 
-    def attack_speed_table():
-    #speed of bosses attacks
+        if random.random() < accuracy:
+            #seeing if the attack is accurate
+            damage = random.randint(1, self.attack)
+            player.health -= damage
+            print(f"{self.name} attacked {player.name} for {damage} damage!")
 
-    def special_attacks():
-    #to figure out what special att the bosses do
+            #checking if player is dead
+            if player.health <= 0:
+                player.health = 0
+                player.is_dead = True
+                print(f"You have been slain by {self.name}")
+        else:
+            print(f"{self.name}'s attack missed!")
+
+    def accuracy_table(self, opponent_defense):
+        #accuracy table for the bosses
+        return min(1.0, max(0.2, 1.0 - opponent_defense / 100))
+
+    def attack_speed_table(self):
+        #speed of bosses attacks
+        return 1 / self.attack_speed
 
 class Player():
  #framework for the player character
     
-    def __init__(self, name, attack, damage, health, attack_speed):
+    def __init__(self, name, attack, defense, health, attack_speed):
     #basic info about the player
         self.name = name
         self.attack = attack
-        self.damage = damage
-        self.health = health
-        self.level = level
+        self.defense = defense
+        self.health = health * 10
+        self.max_health = health * 10
+        self.level = self.calculate_level()
         self.attack_speed = attack_speed
+        self.is_dead = False
+        self.pets = []
+
+    def __repr__(self):
+        #description of your character along with your stats at the time
+        return f"{self.name} is level {self.level} with an attack of {self.attack}, a defense of {self.defense}, and a health pool of {self.max_health}"
+    
+    def print_stats(self):
+        print(self)
+
+    def calculate_level(self):
+        return (self.attack % 10) + (self.defense % 10) + (self.health % 5)
+
+    def acquire_pet(self, pet_name):
+        #adding a pet to the player
+        self.pets.append(pet_name)
+
+        if pet_name in self.pets:
+            #if you already have the pet
+            count = self.pets[pet_name] + 1
+            updated_name = f"{pet_name}({count})"
+            del self.pets[pet_name]
+        else:
+            self.pets[pet_name] = 1
+
+    def has_pet(self, pet_name):
+        #checking if the player has a certain pet
+        return any(pet["name"] == pet_name for pet in self.pets)
+
+    def kill(self, boss):
+        #attack command
+        accuracy = self.accuracy_table(boss.defense)
+
+        if random.random() < accuracy:
+            #seeing if the attack is accurate
+            damage = random.randint(1, self.attack)
+            boss.health -= damage
+            print(f"{self.name} attacked {boss.name} for {damage} damage!")
+
+            #checking if boss is dead
+            if boss.health <= 0:
+                boss.health = 0
+                boss.is_dead = True
+                print(f"You have slain {boss.name}!")
+
+                #handling the drops
+                drop = boss.drop_table()
+                if "pet" in drop:
+                    self.acquire_pet(drop["pet"])
+                    print(f"You got the {drop['pet']}!")
+                if "attributes" in drop:
+                    self.acquire_item(drop["attributes"])
+                    print("You recieved an attribute boosts!")
+                    
+        else:
+            print(f"{self.name}'s attack missed!")
+
+    def accuracy_table(self, opponent_defense):
+        #accuracy table for the bosses
+        return min(1.0, max(0.2, 1.0 - opponent_defense / 100))
+    
+    def heal(self):
+        #healing for the character
+        healing = int(0.1 * self.max_health)
+        heal = min(self.max_health, self.health + healing)
+        if self.health < self.max_health:
+            self.health += heal
+            print(f"{self.name} healed for {heal} health")
+
+    def revive(self):
+        #reviving the character
+        if self.is_dead:
+            self.is_dead = False
+            self.health = 1
+            print(f"{self.name} was revived.")
+    
+    def full_heal(self):
+        #a full heal
+        if self.health < self.max_health:
+            self.health = self.max_health
+            print(f"{self.name} was healed to full health")
+    
+    def acquire_item(self, attributes):
+        #modifying the players stats from the boss drops
+        if "attack" in attributes:
+            self.attack += attributes["attack"]
+        if "defense" in attributes:
+            self.defense += attributes["defense"]
+        if "health" in attributes:
+            self.health += attributes["health"]
+            self.max_health += attributes["health"]
+        self.print_stats()
+
+    def acquire_drop(self, drop):
+        if "pet" in drop:
+            self.acquire_pet(drop["pet"])
+        elif "item" in drop:
+            self.acquire_item(drop["item"])
 
 class Dungeon():
  #Framework for where the player will fight the boss
+    tick_rate = 0.2
 
-    def __inint__(self):
-    #basic info for the fight
+    def __init__(self, player):
+        #basic info for the fight
+        self.player = player
+        self.boss = None
+
+    def __repr__(self):
+        #explaination of the dungeon
+        return f"A fight between {self.player} and {self.boss} has commenced."
+
+    def choose_boss(self):
+        boss_options = ["Kraken", "Cerberus", "Medusa", "Hydra", "Nemean Lion"]
+
+        print("Select a boss to fight:")
+        for i, boss in enumerate(boss_options, start = 1):
+            print(f"{i}, {boss}")
+        while True:
+            try:
+                choice = int(input("Enter the number of your choice:"))
+                if 1 <= choice <= len(boss_options):
+                    boss_name = boss_options[choice - 1]
+                    stats = boss_stats.get(boss_name, (1, 1, 1, 1))
+                    self.boss = Boss(boss_name, *stats)
+                    print(f"You've chosen to fight {self.boss.name}!")
+                    break
+                else:
+                    print("Invalid choice. PLease enter a valid number.")
+            except ValueError:
+                print("Invalid input. Please enter a number.")
+
+    def start_game(self):
+        #self.choose_boss()
+        #print(f"{self.player.name} is facing {self.boss.name} in the arena!")
+        self.game_loop()
+
+    def game_loop(self):
+        #game loop
+        while True:
+            self.choose_boss()
+            self.arena()
+
+            play_again = input("Do you want to continue playing? (yes/no): ")
+            if play_again.lower() != "yes":
+                print("Thanks for playing!")
+                break
+
+    def arena(self):
+        #the arena where the player and boss fight
+        player_ticks = 0
+        boss_ticks = 0
+        player_attack_rate = 1 / self.player.attack_speed
+        boss_attack_rate = 1 / self.boss.attack_speed
+
+        while not self.player.is_dead and not self.boss.is_dead:
+            #player's turm
+            player_ticks += 1
+            if player_ticks >= player_attack_rate and not self.player.is_dead:
+
+                #determining if the player action is to heal or attack the boss
+                action_prob = random.random()
+                if action_prob < 0.2 and self.player.health < self.player.max_health:
+                 #20% chance to heal
+                    self.player.heal()
+
+                else:
+                    self.player.kill(self.boss)
+
+              #checking if the boss is dead
+                if self.boss.is_dead:
+                    self.player.full_heal()
+
+            #boss's turn
+            boss_ticks += 1
+            if boss_ticks >= boss_attack_rate and not self.boss.is_dead:
+                self.boss.kill(self.player)
+                boss_ticks = 0
+
+                if self.player.is_dead:
+                    print(f"{self.player.name} has been slain!")
+        
+        self.player.revive()
+        self.player.full_heal()
+
+
+#boss stats dictionary
+boss_stats = {
+    "Kraken": (5, 10, 100, 2),
+    "Cerberus": (15, 30, 200, 3),
+    "Medusa": (30, 70, 300, 4),
+    "Hydra": (55, 120, 400, 5),
+    "Nemean Lion": (115, 250, 500, 6)
+}
+
+#inputting the bosses information
+Kraken = Boss("Kraken", *boss_stats["Kraken"])
+Cerberus= Boss("Cerberus", *boss_stats["Cerberus"])
+Medusa = Boss("Medusa", *boss_stats["Medusa"])
+Hydra = Boss("Hydra", *boss_stats["Hydra"])
+Nemean_Lion = Boss("Nemean Lion", *boss_stats["Nemean Lion"])
+
+#asking to enter the player name
+player_id = input("Enter your name: ")
+
+#Making a class with the player
+player_one = Player(player_id, 1, 1, 10, 1)
+
+dungeon = Dungeon(player_one)
+dungeon.start_game()
